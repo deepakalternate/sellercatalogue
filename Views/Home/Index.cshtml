@@ -3,6 +3,25 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Upload Seller Catalogue</h1>
+    <p>Insert csv file with the data in the following format: (SellerId, SellerProdId, Name, Description, Qunatity, Price) </p>
+    <form asp-action="UploadSellerInfo" asp-controller="Home" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="filefield">CSV File</label>
+            <input type="file" class="form-control" name="csvFile" id="filefield" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+
+<div class="text-center">
+    <h1 class="display-4">Download Seller Catalogue</h1>
+    <form asp-action="DownloadSellerCatalogue" asp-controller="Home">
+        <div class="form-group">
+            <label for="seller-id">Enter Seller ID</label>
+            <input type="number" class="form-control" name="sellerId" id="seller-id" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Download</button>
+    </form>
 </div>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CsvHelper;
 using Microsoft.AspNetCore.Http;
@@ -44,50 +45,57 @@ namespace sellercatalogue.Controllers
         [HttpPost("sellerupload")]
         public IActionResult UploadSellerInfo([FromForm] IFormFile csvFile)
         {
-            if (csvFile != null && csvFile.Length > 0 && csvFile.ContentType.Equals("text/csv", StringComparison.InvariantCultureIgnoreCase))
+            try
             {
-                List<CsvInput> records = null;
-                using (var csv = new CsvReader(new StreamReader(csvFile.OpenReadStream())))
-                {   csv.Configuration.HasHeaderRecord = false; 
-                    records = csv.GetRecords<CsvInput>().ToList();
+                if (csvFile != null && csvFile.Length > 0)
+                {
+                    List<CsvInput> records = null;
+                    using (var csv = new CsvReader(new StreamReader(csvFile.OpenReadStream())))
+                    {   csv.Configuration.HasHeaderRecord = false; 
+                        records = csv.GetRecords<CsvInput>().ToList();
+                    }
+
+                    bool result = _catalogue.SaveSellerCatalogue(records);
+
+                    return View(result ? "~/Views/Home/Success.cshtml" : "~/Views/Home/Failure.cshtml");
                 }
-
-                bool result = _catalogue.SaveSellerCatalogue(records);
-
-                    
-                return Ok(records);
+                else
+                {
+                    return View("~/Views/Home/Failure.cshtml");
+                }
+                
             }
-            else
+            catch (Exception e)
             {
-                return BadRequest();
+                Console.WriteLine(string.Format("Error: UploadSellerInfo. Exception: {0}", e.Message));
+                return View("~/Views/Home/Failure.cshtml");
             }
+            
         }
 
-        [HttpGet("downloadcatalogue")]
+        [HttpPost("downloadcatalogue")]
         public IActionResult DownloadSellerCatalogue([FromForm]int sellerId)
         {
-            /*
-            List<Customer> catalogue = new List<Customer> {new Customer {
-                Id = 1,
-                Value = 2,
-                Name = "A"
-            },
-            new Customer {
-                Id = 2,
-                Value = 3,
-                Name = "B"
-            }};
 
-            var stream = new MemoryStream();
-            var writeFile = new StreamWriter(stream);
-            var csv = new CsvWriter(writeFile);
+            try
+            {
+                int activeVersion = _catalogue.GetActiveCatalogueVersionId(sellerId);
 
-            csv.WriteRecords(catalogue);
-
-            stream.Position = 0; //reset stream
-            return File(stream, "application/octet-stream", "Reports.csv");
-            */
-            return Ok();
+                if (sellerId > 0 && activeVersion > 0)
+                {
+                    string csvData = _catalogue.GenerateSellerCatalogueCSV(sellerId, activeVersion);
+                    return File(new UTF8Encoding().GetBytes(csvData), "text/csv", string.Format("seller-{0}-{1}.csv", sellerId, activeVersion));
+                }
+                else
+                {
+                    return View("~/Views/Home/SellerFailure.cshtml");   
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(string.Format("Error: DownloadSellerCatalogue. Exception: {0}", e.Message));
+                return View("~/Views/Home/SellerFailure.cshtml");   
+            }
         }
     }
 }

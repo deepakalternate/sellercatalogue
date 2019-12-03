@@ -9,5 +9,7 @@ namespace sellercatalogue.DAL
         bool SaveNewSeller(int sellerId);
         List<CsvInput> GetRemainingProducts(string prodIds, int sellerId, int versionId);
         bool SaveNewCatalogueData(List<CsvInput> inputs, int versionId);
+        bool UpdateActiveVersion(int sellerId, int versionId);
+        List<CsvInput> GenerateCatalogue(int sellerId, int versionId);
     }
 }
